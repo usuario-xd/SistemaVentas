@@ -1,0 +1,277 @@
+@using SistemaVentas.Models
+@model Venta
+@{
+    ViewData["Title"] = "Registro de venta";
+    var clientes = ViewBag.Clientes as List<Cliente> ?? new List<Cliente>();
+    var productos = ViewBag.Productos as List<Producto> ?? new List<Producto>();
+}
+
+<h2 class="mb-4">Registro de venta</h2>
+
+<form asp-action="Create" method="post" id="formVenta">
+    @Html.AntiForgeryToken()
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title text-secondary font-weight-bold mb-3">1. Datos de la venta</h5>
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label font-weight-bold">Fecha</label>
+                    <input type="text" class="form-control" value="@DateTime.Now.ToString("dd/MM/yyyy HH:mm")" readonly />
+                </div>
+                <div class="col-md-5 position-relative">
+                    <label class="form-label font-weight-bold">Buscar cliente (nombre o celular)</label>
+                    <div class="input-group">
+                        <input type="text" id="buscarCliente" class="form-control" placeholder="Escriba nombre o teléfono..." autocomplete="off" />
+                        <a asp-controller="Clientes" asp-action="Create" class="btn btn-outline-primary">Registrar cliente</a>
+                    </div>
+                    <div id="listaClientes" class="list-group position-absolute w-100 shadow" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label font-weight-bold">Cliente de esta venta</label>
+                    <div id="clienteSeleccionadoTexto" class="form-control-plaintext text-muted font-italic">
+                        (ninguno seleccionado)
+                    </div>
+                    <input type="hidden" asp-for="ClienteId" id="ClienteId" value="" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title text-secondary font-weight-bold mb-3">2. Productos</h5>
+            <div class="row mb-3 align-items-end">
+                <div class="col-md-5 position-relative">
+                    <label class="form-label font-weight-bold">Buscar producto</label>
+                    <input type="text" id="buscarProducto" class="form-control" placeholder="Escriba parte del nombre..." autocomplete="off" />
+                    <div id="listaProductos" class="list-group position-absolute w-100 shadow" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label font-weight-bold">Precio</label>
+                    <input type="number" id="productoPrecio" class="form-control" step="0.01" readonly />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label font-weight-bold">Cantidad</label>
+                    <input type="number" id="productoCantidad" class="form-control" value="1" min="1" />
+                </div>
+                <div class="col-md-2">
+                    <button type="button" id="btnAgregarProducto" class="btn btn-success w-100">+ Agregar</button>
+                </div>
+            </div>
+
+            <table class="table table-bordered table-striped" id="tablaDetalles">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Producto</th>
+                        <th style="width: 150px;">Precio</th>
+                        <th style="width: 120px;">Cantidad</th>
+                        <th style="width: 150px;">Subtotal</th>
+                        <th style="width: 80px;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="filaVacia">
+                        <td colspan="6" class="text-center text-muted">Aún no agregó productos.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row justify-content-end">
+        <div class="col-md-5">
+            <div class="card shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0 font-weight-bold">TOTAL A PAGAR</h4>
+                    <h3 class="mb-0 text-success font-weight-bold" id="lblTotal">Bs 0.00</h3>
+                </div>
+                <hr class="my-2" />
+                <div class="form-group mb-2">
+                    <label class="form-label font-weight-bold">Monto recibido</label>
+                    <input type="number" asp-for="Recibido" id="montoRecibido" class="form-control form-control-lg" step="0.01" placeholder="0.00" required />
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="font-weight-bold">Cambio:</span>
+                    <span id="lblCambio" class="h5 mb-0 text-primary">Bs 0.00</span>
+                </div>
+                <small class="text-muted d-block mb-3">Para registrar: ingresar el monto recibido.</small>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg flex-fill me-2" id="btnRegistrar" disabled>Registrar venta</button>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">Cancelar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const clientesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(clientes.Select(c => new { c.Id, NombreCompleto = $"{c.Nombre} {c.Apellido}".Trim(), c.Telefono })));
+        const productosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(productos.Select(p => new { p.Id, p.Nombre, p.Precio, p.Stock })));
+
+        let productoSeleccionado = null;
+        let detalles = [];
+
+        const buscarClienteInput = document.getElementById('buscarCliente');
+        const listaClientes = document.getElementById('listaClientes');
+        const clienteIdInput = document.getElementById('ClienteId');
+        const clienteTexto = document.getElementById('clienteSeleccionadoTexto');
+
+        buscarClienteInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            listaClientes.innerHTML = '';
+            if (!query) {
+                listaClientes.style.display = 'none';
+                return;
+            }
+
+            const filtrados = clientesData.filter(c => 
+                c.NombreCompleto.toLowerCase().includes(query) || (c.Telefono && c.Telefono.includes(query))
+            );
+
+            if (filtrados.length === 0) {
+                listaClientes.innerHTML = `<div class="list-group-item text-muted">No se encontró "${query}". Use el botón "Registrar cliente".</div>`;
+            } else {
+                filtrados.forEach(c => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.textContent = `${c.NombreCompleto} ${c.Telefono ? '(' + c.Telefono + ')' : ''}`;
+                    item.addEventListener('click', () => {
+                        clienteIdInput.value = c.Id;
+                        clienteTexto.textContent = c.NombreCompleto;
+                        clienteTexto.classList.remove('text-muted', 'font-italic');
+                        clienteTexto.classList.add('font-weight-bold', 'text-dark');
+                        listaClientes.style.display = 'none';
+                        buscarClienteInput.value = '';
+                    });
+                    listaClientes.appendChild(item);
+                });
+            }
+            listaClientes.style.display = 'block';
+        });
+
+        const buscarProductoInput = document.getElementById('buscarProducto');
+        const listaProductos = document.getElementById('listaProductos');
+        const productoPrecioInput = document.getElementById('productoPrecio');
+
+        buscarProductoInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            listaProductos.innerHTML = '';
+            if (!query) {
+                listaProductos.style.display = 'none';
+                return;
+            }
+
+            const filtrados = productosData.filter(p => p.Nombre.toLowerCase().includes(query));
+
+            if (filtrados.length === 0) {
+                listaProductos.innerHTML = `<div class="list-group-item text-muted">No se encontraron productos</div>`;
+            } else {
+                filtrados.forEach(p => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.innerHTML = `<span>${p.Nombre}</span> <span class="badge bg-primary rounded-pill">Bs ${p.Precio.toFixed(2)}</span>`;
+                    item.addEventListener('click', () => {
+                        productoSeleccionado = p;
+                        buscarProductoInput.value = p.Nombre;
+                        productoPrecioInput.value = p.Precio.toFixed(2);
+                        listaProductos.style.display = 'none';
+                    });
+                    listaProductos.appendChild(item);
+                });
+            }
+            listaProductos.style.display = 'block';
+        });
+
+        document.getElementById('btnAgregarProducto').addEventListener('click', function () {
+            const cantInput = document.getElementById('productoCantidad');
+            const cantidad = parseInt(cantInput.value);
+
+            if (!productoSeleccionado || cantidad <= 0) return;
+
+            const subtotal = productoSeleccionado.Precio * cantidad;
+
+            const indexExistente = detalles.findIndex(d => d.ProductoId === productoSeleccionado.Id);
+            if (indexExistente >= 0) {
+                detalles[indexExistente].Cantidad += cantidad;
+                detalles[indexExistente].Subtotal = detalles[indexExistente].Cantidad * detalles[indexExistente].Precio;
+            } else {
+                detalles.push({
+                    ProductoId: productoSeleccionado.Id,
+                    Nombre: productoSeleccionado.Nombre,
+                    Precio: productoSeleccionado.Precio,
+                    Cantidad: cantidad,
+                    Subtotal: subtotal
+                });
+            }
+
+            // Limpiar campos de selección de producto
+            buscarProductoInput.value = '';
+            productoPrecioInput.value = '';
+            cantInput.value = '1';
+            productoSeleccionado = null;
+
+            renderizarTabla();
+        });
+
+        function renderizarTabla() {
+            const tbody = document.querySelector('#tablaDetalles tbody');
+            tbody.innerHTML = '';
+
+            if (detalles.length === 0) {
+                tbody.innerHTML = '<tr id="filaVacia"><td colspan="6" class="text-center text-muted">Aún no agregó productos.</td></tr>';
+            } else {
+                detalles.forEach((d, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>
+                            ${d.Nombre}
+                            <input type="hidden" name="Detalles[${index}].ProductoId" value="${d.ProductoId}" />
+                        </td>
+                        <td>Bs ${d.Precio.toFixed(2)} <input type="hidden" name="Detalles[${index}].Precio" value="${d.Precio}" /></td>
+                        <td>${d.Cantidad} <input type="hidden" name="Detalles[${index}].Cantidad" value="${d.Cantidad}" /></td>
+                        <td>Bs ${d.Subtotal.toFixed(2)} <input type="hidden" name="Detalles[${index}].Subtotal" value="${d.Subtotal}" /></td>
+                        <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarDetalle(${index})">X</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            calcularTotales();
+        }
+
+        function eliminarDetalle(index) {
+            detalles.splice(index, 1);
+            renderizarTabla();
+        }
+
+        const montoRecibidoInput = document.getElementById('montoRecibido');
+        const lblTotal = document.getElementById('lblTotal');
+        const lblCambio = document.getElementById('lblCambio');
+        const btnRegistrar = document.getElementById('btnRegistrar');
+
+        function calcularTotales() {
+            const total = detalles.reduce((sum, d) => sum + d.Subtotal, 0);
+            lblTotal.textContent = `Bs ${total.toFixed(2)}`;
+
+            const recibido = parseFloat(montoRecibidoInput.value) || 0;
+            const cambio = recibido - total;
+
+            lblCambio.textContent = `Bs ${(cambio > 0 ? cambio : 0).toFixed(2)}`;
+
+            btnRegistrar.disabled = !(detalles.length > 0 && recibido >= total && total > 0);
+        }
+
+        montoRecibidoInput.addEventListener('input', calcularTotales);
+
+        document.addEventListener('click', function (e) {
+            if (!buscarClienteInput.contains(e.target)) listaClientes.style.display = 'none';
+            if (!buscarProductoInput.contains(e.target)) listaProductos.style.display = 'none';
+        });
+    </script>
+}

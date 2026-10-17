@@ -1,0 +1,16 @@
+@using SistemaVentas.Models
+@model Categoria
+@{
+    ViewData["Title"] = "Eliminar categoría";
+}
+
+<h2>Eliminar categoría</h2>
+<p>¿Seguro que quieres eliminar<strong>@Model.Nombre</strong>?</p>
+
+<div asp-validation-summary = "All" class="text-danger">
+
+</div>
+<form asp-action="delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a class="btn btn-secundary" asp-action="Index">Cancelar</a>
+</form>

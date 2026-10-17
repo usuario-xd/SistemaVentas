@@ -1,0 +1,11 @@
+@using SistemaVentas.Models
+@model Producto
+@{
+    ViewData["Title"] = "Nuevo Producto";
+}
+
+<h2>Nuevo Producto</h2>
+
+<form asp-action="Create" method="post">
+    <partial name="_Form" model="Model" />
+</form>
