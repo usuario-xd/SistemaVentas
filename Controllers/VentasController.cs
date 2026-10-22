@@ -66,7 +66,7 @@ public class VentasController : Controller
             }
         }
 
-        if (venta.Detalles == null || !venta.Detalles.Any())
+        if (venta.Detalles?.Any() != true)
         {
             ModelState.AddModelError("", "Debe agregar al menos un producto a la venta.");
         }
@@ -78,7 +78,7 @@ public class VentasController : Controller
             return View(venta);
         }
 
-        foreach (var detalle in venta.Detalles)
+        foreach (var detalle in venta.Detalles ?? new List<DetalleVenta>())
         {
             detalle.Subtotal = detalle.Cantidad * detalle.Precio;
         }
@@ -130,7 +130,7 @@ public class VentasController : Controller
             return View(venta);
         }
 
-        foreach (var detalle in venta.Detalles)
+        foreach (var detalle in venta.Detalles ?? new List<DetalleVenta>())
         {
             detalle.Subtotal = detalle.Cantidad * detalle.Precio;
         }

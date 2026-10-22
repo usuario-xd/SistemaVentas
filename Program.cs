@@ -2,7 +2,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SistemaVentas.Data;
 
-// 1) Cargar el archivo .env (ASP.NET Core no lo lee solo). En Railway no existe: se usan variables del panel.
+// 1) Cargar el archivo .env
 var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 if (File.Exists(envFile))
 {
@@ -15,7 +15,7 @@ if (File.Exists(envFile))
     }
 }
 
-// Usar punto decimal siempre. Sin esto, en un Windows en español un precio "9.5" puede leerse como 95.
+// Configurar cultura para usar punto decimal
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
@@ -23,26 +23,32 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// 2) Base de datos. El proveedor se cambia SOLO en esta línea.
-//    Ahora: SQLite (archivo local). Ver README, sección "Conexión a Turso".
+// 2) Configuración de DbContext
 var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "ventas.db";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
-// 3) Railway entrega el puerto en la variable PORT
+// 3) Puerto para desplegar en Railway
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
+// Habilitar página de errores detallados
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
-app.UseStaticFiles();
+app.UseStaticFiles(); // Sirve archivos de la carpeta wwwroot
 app.UseRouting();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
