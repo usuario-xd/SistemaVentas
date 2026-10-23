@@ -7,50 +7,218 @@
 
     <!-- Bootstrap 5 CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        /* Estilos Globales */
+        body {
+            background-color: #f4f6f9; /* Fondo gris muy claro */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR (Menú Lateral) --- */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: linear-gradient(180deg, #0d1b4c 0%, #1a2a6c 100%); /* Azul oscuro elegante */
+            color: #fff;
+            z-index: 1000;
+            transition: all 0.3s;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .sidebar-brand i {
+            background: #fff;
+            color: #1a2a6c;
+            padding: 5px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-nav {
+            padding: 20px 10px;
+            list-style: none;
+            margin: 0;
+        }
+
+        .sidebar-nav .nav-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin: 15px 15px 5px 15px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-nav .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .sidebar-nav .nav-link:hover,
+        .sidebar-nav .nav-link.active {
+            background: #2563eb; /* Azul brillante al pasar el mouse */
+            color: #fff;
+            transform: translateX(5px);
+        }
+
+        .sidebar-nav .nav-link i {
+            font-size: 1.2rem;
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .main-content {
+            margin-left: 260px; /* Espacio para el sidebar */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Topbar (Barra superior) */
+        .topbar {
+            background: #fff;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Estilos de Tarjetas y Tablas */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 15px 20px;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Ajustes Responsive */
+        @@media (max-width: 768px) {
+            .sidebar { margin-left: -260px; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SistemaVentas</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Categorias" asp-action="Index">Categorías</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Productos" asp-action="Index">Productos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Clientes" asp-action="Index">Clientes</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Ventas" asp-action="Index">Ventas</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+    <!-- ================= SIDEBAR ================= -->
+    <div class="sidebar">
+        <a href="/" class="sidebar-brand">
+            <i class="bi bi-shop"></i>
+            <span>Sistema Ventas</span>
+        </a>
+
+        <ul class="sidebar-nav">
+            <div class="nav-title">General</div>
+            <li>
+                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+            </li>
+
+            <div class="nav-title">Catálogo</div>
+            <li>
+                <a class="nav-link" asp-controller="Productos" asp-action="Index">
+                    <i class="bi bi-box-seam"></i> Productos
+                </a>
+            </li>
+            <li>
+                <a class="nav-link" asp-controller="Categorias" asp-action="Index">
+                    <i class="bi bi-tags"></i> Categorías
+                </a>
+            </li>
+            <li>
+                <a class="nav-link" asp-controller="Clientes" asp-action="Index">
+                    <i class="bi bi-people"></i> Clientes
+                </a>
+            </li>
+
+            <div class="nav-title">Operaciones</div>
+            <li>
+                <a class="nav-link" asp-controller="Ventas" asp-action="Index">
+                    <i class="bi bi-cart-check"></i> Ventas
+                </a>
+            </li>
+            <li>
+                <a class="nav-link" asp-controller="Reportes" asp-action="Index">
+                    <i class="bi bi-bar-chart-line"></i> Reportes
+                </a>
+            </li>
+        </ul>
     </div>
 
-    <footer class="border-top footer text-muted py-3">
-        <div class="container">
-            &copy; 2026 - SistemaVentas
+    <!-- ================= CONTENIDO PRINCIPAL ================= -->
+    <div class="main-content">
+        
+        <!-- Topbar -->
+        <div class="topbar">
+            <h5 class="mb-0 fw-bold text-secondary">@ViewData["Title"]</h5>
+            
+            @if (User.Identity!.IsAuthenticated)
+            {
+                <div class="user-info">
+                    <span class="text-muted d-none d-md-inline">
+                        Hola, <strong class="text-dark">@User.Identity.Name</strong>
+                    </span>
+                    <a class="btn btn-outline-danger btn-sm rounded-pill" asp-controller="Account" asp-action="Logout">
+                        <i class="bi bi-box-arrow-right"></i> Salir
+                    </a>
+                </div>
+            }
         </div>
-    </footer>
+
+        <!-- Aquí va el contenido de cada vista -->
+        <div class="container-fluid px-4 pb-4">
+            @RenderBody()
+        </div>
+    </div>
 
     <!-- jQuery y Bootstrap Bundle CDN -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

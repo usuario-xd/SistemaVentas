@@ -1,0 +1,228 @@
+@model SistemaVentas.ViewModels.ReportesViewModel
+@{
+    ViewData["Title"] = "Reportes";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Reportes y estadísticas</h2>
+            <p class="text-muted">Consulta, imprime o exporta la información de tu negocio.</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2"><i class="bi bi-download"></i> Exportar ventas CSV</button>
+            <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Desde</label>
+                    <input type="date" name="desde" class="form-control" value="@Model.FechaDesde.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Hasta</label>
+                    <input type="date" name="hasta" class="form-control" value="@Model.FechaHasta.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Historial de compras del cliente</label>
+                    <select name="clienteId" class="form-select" asp-items="@(new SelectList(Model.TodosLosClientes, "Id", "Nombre", Model.ClienteId))">
+                        <option value="">Todos los clientes</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i> Aplicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen del Periodo -->
+    <h5 class="fw-bold mb-3">Resumen del periodo</h5>
+    <p class="text-muted small">@Model.FechaDesde.ToString("dd/MM/yyyy") al @Model.FechaHasta.ToString("dd/MM/yyyy")</p>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Ventas totales</p>
+                    <h3 class="fw-bold">Bs @Model.VentasTotales.ToString("N2")</h3>
+                    <small class="text-muted">@Model.CantidadTransacciones transacciones</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Ticket promedio</p>
+                    <h3 class="fw-bold">Bs @Model.TicketPromedio.ToString("N2")</h3>
+                    <small class="text-muted">Por venta del periodo</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <p class="text-muted mb-1">Producto estrella</p>
+                    <h3 class="fw-bold">@Model.ProductoEstrella</h3>
+                    <small class="text-muted">@Model.UnidadesProductoEstrella unidades</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas lado a lado -->
+    <div class="row mb-4">
+        <!-- Ventas por rango -->
+        <div class="col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold">Ventas por rango de fechas</h5>
+                    <p class="text-muted small">Detalle de ventas del periodo seleccionado</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Venta</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Model.VentasDelPeriodo)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-primary">#@venta.Id</span></td>
+                                        <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@(venta.Cliente?.Nombre ?? "Sin cliente")</td>
+                                        <td class="text-end fw-bold">Bs @venta.Total.ToString("N2")</td>
+                                    </tr>
+                                }
+                                @if (!Model.VentasDelPeriodo.Any())
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted">No hay ventas en este periodo.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventas por producto -->
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold">Ventas por producto</h5>
+                    <p class="text-muted small">Unidades y monto del periodo</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Unidades</th>
+                                    <th class="text-end">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var prod in Model.VentasPorProducto)
+                                {
+                                    <tr>
+                                        <td>@prod.Nombre</td>
+                                        <td>@prod.Categoria</td>
+                                        <td class="text-center">@prod.Unidades</td>
+                                        <td class="text-end fw-bold">Bs @prod.MontoTotal.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock actual -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h5 class="fw-bold">Stock actual por producto y categoría</h5>
+                    <p class="text-muted small">Productos con stock bajo o agotados destacados</p>
+                </div>
+                <span class="badge bg-success rounded-pill align-self-start">0 por reponer</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mt-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Mínimo</th>
+                            <th class="text-center">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var prod in Model.StockProductos)
+                        {
+                            <tr>
+                                <td>@prod.Nombre</td>
+                                <td>@prod.Categoria?.Nombre</td>
+                                <td class="text-end">Bs @prod.Precio</td>
+                                <td class="text-center">@prod.Stock</td>
+                                <td class="text-center">@prod.StockMinimo</td>
+                                <td class="text-center">
+                                    @if (prod.Stock <= prod.StockMinimo)
+                                    {
+                                        <span class="badge bg-danger">Reponer</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Disponible</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de clientes -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="fw-bold">Listado de clientes</h5>
+            <p class="text-muted small">@Model.ListadoClientes.Count clientes registrados</p>
+            <div class="table-responsive">
+                <table class="table table-hover mt-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Celular</th>
+                            <th>Correo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cli in Model.ListadoClientes)
+                        {
+                            <tr>
+                                <td>@cli.Nombre</td>
+                                <td>@cli.Telefono</td> <!-- OJO: Cambia 'Telefono' por la propiedad real de tu modelo Cliente -->
+                                <td>@cli.Email</td>    <!-- OJO: Cambia 'Email' por la propiedad real de tu modelo Cliente -->
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

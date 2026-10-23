@@ -15,7 +15,6 @@ public class VentasController : Controller
         _context = context;
     }
 
-    // GET: Ventas
     public async Task<IActionResult> Index()
     {
         var ventas = await _context.Ventas
@@ -29,7 +28,6 @@ public class VentasController : Controller
         return View(ventas ?? new List<Venta>());
     }
 
-    // GET: Ventas/Details/5
     public async Task<IActionResult> Details(int id)
     {
         var venta = await _context.Ventas
@@ -43,7 +41,6 @@ public class VentasController : Controller
         return View(venta);
     }
 
-    // GET: Ventas/Create
     public async Task<IActionResult> Create()
     {
         ViewBag.Clientes = await _context.Clientes.ToListAsync();
@@ -51,12 +48,10 @@ public class VentasController : Controller
         return View(new Venta());
     }
 
-    // POST: Ventas/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Venta venta)
     {
-        // Se remueven propiedades de navegación para evitar falsos errores de model state
         ModelState.Remove("Cliente");
         foreach (var key in ModelState.Keys.Where(k => k.StartsWith("Detalles")).ToList())
         {
@@ -92,7 +87,6 @@ public class VentasController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: Ventas/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
         var venta = await _context.Ventas
@@ -107,7 +101,6 @@ public class VentasController : Controller
         return View(venta);
     }
 
-    // POST: Ventas/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Venta venta)
@@ -144,7 +137,6 @@ public class VentasController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: Ventas/Delete/5
     public async Task<IActionResult> Delete(int id)
     {
         var venta = await _context.Ventas
@@ -158,7 +150,6 @@ public class VentasController : Controller
         return View(venta);
     }
 
-    // POST: Ventas/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

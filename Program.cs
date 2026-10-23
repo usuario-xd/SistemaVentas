@@ -1,6 +1,9 @@
 using System.Globalization;
+using Microsoft.AspNetCore.Authentication.Cookies; // <-- Necesario para el Login
 using Microsoft.EntityFrameworkCore;
 using SistemaVentas.Data;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // 1) Cargar el archivo .env
 var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -19,8 +22,7 @@ if (File.Exists(envFile))
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
-var builder = WebApplication.CreateBuilder(args);
-
+// --- SERVICIOS ---
 builder.Services.AddControllersWithViews();
 
 // 2) Configuración de DbContext
@@ -28,14 +30,26 @@ var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "ventas.db";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
+// --- NUEVO: Configuración de Autenticación por Cookies para el Login ---
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login"; // Ruta a la que redirige si no hay sesión
+        options.AccessDeniedPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8); // Sesión de 8 horas (jornada laboral)
+    });
+
 // 3) Puerto para desplegar en Railway
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
+
+// --- CONSTRUCCIÓN DE LA APP (Aquí está tu builder.Build) ---
 var app = builder.Build();
 
-// Habilitar página de errores detallados
+
+// --- MIDDLEWARES (El orden es muy importante) ---
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -48,6 +62,9 @@ else
 
 app.UseStaticFiles(); // Sirve archivos de la carpeta wwwroot
 app.UseRouting();
+
+// NUEVO: Habilitar autenticación (siempre va antes de Authorization)
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllerRoute(

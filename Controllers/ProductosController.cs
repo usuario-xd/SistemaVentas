@@ -33,22 +33,21 @@ public class ProductosController : Controller
     }
 
     [HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Create(Producto producto)
-{
-    // Ignorar la validación del objeto de navegación Categoria
-    ModelState.Remove("Categoria");
-
-    if (!ModelState.IsValid) 
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(Producto producto)
     {
-        ViewBag.CategoriaId = new SelectList(await _context.Categorias.ToListAsync(), "Id", "Nombre", producto.CategoriaId);
-        return View(producto);
-    }
+        ModelState.Remove("Categoria");
 
-    _context.Productos.Add(producto);
-    await _context.SaveChangesAsync();
-    return RedirectToAction(nameof(Index));
-}
+        if (!ModelState.IsValid) 
+        {
+            ViewBag.CategoriaId = new SelectList(await _context.Categorias.ToListAsync(), "Id", "Nombre", producto.CategoriaId);
+            return View(producto);
+        }
+
+        _context.Productos.Add(producto);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
 
     public async Task<IActionResult> Edit(int id)
     {

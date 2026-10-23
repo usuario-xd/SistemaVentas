@@ -1,10 +1,179 @@
+@model SistemaVentas.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"] = "Inicio";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="p-5 mb-4 bg-light rounded-3">
-    <h1 class="display-6">Sistema WEB de ventas</h1>
-    <p class="lead">Programacion WEB II</p>
-    <a class="btn btn-primary" asp-controller="Productos" asp-action="Index">Ver Productos</a>
-    <a class="btn btn-outline-secondary" asp-controller="Categorias" asp-action="Index">Ver Categorias</a>
+<div class="container-fluid mt-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Dashboard</h2>
+            <p class="text-muted">Resumen general de tu negocio hoy @DateTime.Now.ToString("dd/MM/yyyy")</p>
+        </div>
+        <div>
+            <a class="btn btn-primary" asp-controller="Ventas" asp-action="Create">
+                <i class="bi bi-cart-plus"></i> Nueva Venta
+            </a>
+            <a class="btn btn-outline-secondary" asp-controller="Productos" asp-action="Create">
+                <i class="bi bi-box-seam"></i> Nuevo Producto
+            </a>
+        </div>
+    </div>
+
+    <!-- Fila 1: Tarjetas KPI -->
+    <div class="row mb-4">
+        <!-- Ventas Hoy -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 text-white-50">Ventas de Hoy</p>
+                            <h3 class="fw-bold mb-0">Bs @Model.VentasHoy.ToString("N2")</h3>
+                        </div>
+                        <i class="bi bi-cash-stack fs-1 text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventas del Mes -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 text-white-50">Ventas del Mes</p>
+                            <h3 class="fw-bold mb-0">Bs @Model.VentasMes.ToString("N2")</h3>
+                        </div>
+                        <i class="bi bi-graph-up-arrow fs-1 text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Productos -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 text-white-50">Total Productos</p>
+                            <h3 class="fw-bold mb-0">@Model.TotalProductos</h3>
+                        </div>
+                        <i class="bi bi-box-seam fs-1 text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Clientes -->
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 text-white-50">Total Clientes</p>
+                            <h3 class="fw-bold mb-0">@Model.TotalClientes</h3>
+                        </div>
+                        <i class="bi bi-people fs-1 text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerta de Stock Bajo -->
+    @if (Model.ProductosBajoStock > 0)
+    {
+        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+            <div>
+                <strong>¡Atención!</strong> Tienes <strong>@Model.ProductosBajoStock</strong> productos con stock bajo o agotado.
+                <a asp-controller="Productos" asp-action="Index" class="alert-link">Ver productos</a>
+            </div>
+        </div>
+    }
+
+    <!-- Fila 2: Tablas -->
+    <div class="row">
+        <!-- Últimas Ventas -->
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Últimas Ventas</h5>
+                    <a asp-controller="Ventas" asp-action="Index" class="btn btn-sm btn-outline-primary">Ver todas</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Model.UltimasVentas)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-primary">#@venta.Id</span></td>
+                                        <td>@venta.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@(venta.Cliente?.Nombre ?? "Sin cliente")</td>
+                                        <td class="text-end fw-bold">Bs @venta.Total.ToString("N2")</td>
+                                    </tr>
+                                }
+                                @if (!Model.UltimasVentas.Any())
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted py-4">No hay ventas registradas aún.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos Críticos -->
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Productos por Reponer</h5>
+                    <a asp-controller="Productos" asp-action="Index" class="btn btn-sm btn-outline-danger">Gestionar</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-center">Mínimo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var prod in Model.ProductosCriticos)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@prod.Nombre</strong><br>
+                                            <small class="text-muted">@prod.Categoria?.Nombre</small>
+                                        </td>
+                                        <td class="text-center text-danger fw-bold">@prod.Stock</td>
+                                        <td class="text-center">@prod.StockMinimo</td>
+                                    </tr>
+                                }
+                                @if (!Model.ProductosCriticos.Any())
+                                {
+                                    <tr><td colspan="3" class="text-center text-muted py-4">Todo el stock está en orden. ✅</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

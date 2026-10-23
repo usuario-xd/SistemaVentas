@@ -1,0 +1,72 @@
+@{
+    Layout = null; // Para que no cargue el menú de arriba
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap para el ojito -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f0f2f5; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 400px; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .input-group-text { cursor: pointer; background-color: transparent; border-left: none; }
+        .form-control { border-right: none; }
+        .input-group:focus-within .form-control,
+        .input-group:focus-within .input-group-text { border-color: #86b7fe; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h3 class="text-center mb-4">Sistema de Ventas</h3>
+        <h5 class="text-center text-muted mb-4">Inicia sesión</h5>
+        
+        <form asp-action="Login" method="post">
+            
+            <div class="mb-3">
+                <label class="form-label">Usuario</label>
+                <!-- value="Ingenieronquevivedeldia" deja el usuario escrito por defecto -->
+                <input type="text" name="usuario" class="form-control" value="Ingenieronquevivedeldia" required />
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <!-- value="Bastadebloqueos" deja la contraseña escrita por defecto -->
+                    <input type="password" name="password" id="passwordInput" class="form-control" value="Bastadebloqueos" required />
+                    <!-- Botón del ojito -->
+                    <span class="input-group-text" id="togglePassword">
+                        <i class="bi bi-eye" id="eyeIcon"></i>
+                    </span>
+                </div>
+            </div>
+            
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger py-2">@ViewBag.Error</div>
+            }
+
+            <button type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
+        </form>
+    </div>
+
+    <!-- Script para el ojito -->
+    <script>
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            const passwordInput = document.getElementById("passwordInput");
+            const eyeIcon = document.getElementById("eyeIcon");
+            
+            // Si está en password, lo cambia a text
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                eyeIcon.classList.remove("bi-eye");
+                eyeIcon.classList.add("bi-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                eyeIcon.classList.remove("bi-eye-slash");
+                eyeIcon.classList.add("bi-eye");
+            }
+        });
+    </script>
+</body>
+</html>
